@@ -1,13 +1,10 @@
 import { useEffect, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { STATUS_COLORS } from '../utils/constants';
-
-// Pure Leaflet (no react-leaflet) for full control
-let L = null;
-
-function getL() {
-  if (!L) L = window.L;
-  return L;
-}
 
 function createPin(status) {
   const color = STATUS_COLORS[status] || '#94a3b8';
@@ -15,7 +12,7 @@ function createPin(status) {
     <path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.27 21.73 0 14 0z" fill="${color}" stroke="white" stroke-width="2"/>
     <circle cx="14" cy="14" r="6" fill="white" opacity="0.9"/>
   </svg>`;
-  return getL().divIcon({
+  return L.divIcon({
     html: svg,
     iconSize: [28, 36],
     iconAnchor: [14, 36],
@@ -33,8 +30,6 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
   // Init map
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return;
-    const L = getL();
-    if (!L) return;
 
     const map = L.map(containerRef.current, {
       center: [32.7767, -96.7970], // Dallas
@@ -47,20 +42,17 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
       maxZoom: 19,
     }).addTo(map);
 
-    // Zoom control top-right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Click to add
     map.on('click', (e) => {
       onMapClick(e.latlng.lat, e.latlng.lng);
     });
 
-    // Cluster group
     if (L.markerClusterGroup) {
       const cluster = L.markerClusterGroup({
         maxClusterRadius: 60,
-        iconCreateFunction: (cluster) => {
-          const count = cluster.getChildCount();
+        iconCreateFunction: (c) => {
+          const count = c.getChildCount();
           return L.divIcon({
             html: `<div style="width:36px;height:36px;border-radius:50%;background:#0a1628;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #14b8c8;">${count}</div>`,
             className: '',
@@ -79,14 +71,12 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
   // Sync markers
   useEffect(() => {
     const map = mapRef.current;
-    const L = getL();
-    if (!map || !L) return;
+    if (!map) return;
 
     const cluster = clusterRef.current;
     const existing = markersRef.current;
     const newIds = new Set(businesses.filter(b => b.lat && b.lng).map(b => b.id));
 
-    // Remove stale
     Object.keys(existing).forEach(id => {
       if (!newIds.has(id)) {
         if (cluster) cluster.removeLayer(existing[id]);
@@ -95,7 +85,6 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
       }
     });
 
-    // Add/update
     businesses.forEach(b => {
       if (!b.lat || !b.lng) return;
       if (existing[b.id]) {
