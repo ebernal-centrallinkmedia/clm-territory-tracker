@@ -70,7 +70,7 @@ export default function MapView({ user }) {
   }, [businesses]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
       {/* Top Bar */}
       <div style={{ background: '#0a1628', padding: '10px 12px 8px', zIndex: 30, flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>

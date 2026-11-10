@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
@@ -27,8 +27,8 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
   const markersRef = useRef({});
   const clusterRef = useRef(null);
 
-  // Init map
-  useEffect(() => {
+  // Init map — useLayoutEffect so the container has real dimensions
+  useLayoutEffect(() => {
     if (mapRef.current || !containerRef.current) return;
 
     const map = L.map(containerRef.current, {
@@ -47,6 +47,9 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
     map.on('click', (e) => {
       onMapClick(e.latlng.lat, e.latlng.lng);
     });
+
+    // force recalc after first paint so tiles render if container was 0px
+    requestAnimationFrame(() => map.invalidateSize());
 
     if (L.markerClusterGroup) {
       const cluster = L.markerClusterGroup({
@@ -114,6 +117,6 @@ export default function MapComponent({ businesses, selectedId, onSelect, onMapCl
   }, [selectedId]);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
   );
 }
